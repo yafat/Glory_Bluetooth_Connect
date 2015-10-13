@@ -28,9 +28,14 @@ var rl = readline.createInterface({
 
 rl.on('line', function (cmd) {
   console.log('send command: '+cmd);
-  if(is_connected === true){
-  	client.write(cmd + '\n');
-  }else{
-  	console.log('Socket is not connected.');
-  }
+  if(cmd == 'get_pic'){
+  	swrite(cmd);
+  }else if(cmd == '')
 });
+function swrite(cmd){
+	if(is_connected === true){
+	  	client.write(cmd + '\n');
+	  }else{
+	  	console.log('Can not send cmd:'+cmd+', Socket is not connected.');
+	  }
+}
