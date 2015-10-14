@@ -30,7 +30,7 @@ rl.on('line', function (cmd) {
   console.log('send command: '+cmd);
   if(cmd == 'get_pic'){
   	swrite(cmd);
-  }else if(cmd == '')
+  }
 });
 function swrite(cmd){
 	if(is_connected === true){

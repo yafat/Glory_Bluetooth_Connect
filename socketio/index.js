@@ -1,12 +1,14 @@
 var readline = require('readline');
-var app = require('express')();
+var express = require('express');
+var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var net = require('net');
 var client = new net.Socket();
 var is_connected = false;
+app.use(express.static('public'));
 app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 io.on('connection', function(socket){
@@ -17,7 +19,7 @@ io.on('connection', function(socket){
   });
   socket.on('cmd', function(cmd){
     console.log('rec cmd='+cmd);
-    if(cmd == 'get_pic' || cmd == 'select_type=1'){
+    if(cmd == 'get_pic' || cmd == 'select_type=1' || cmd == 'select_type=2' || cmd == 'select_type=3'){
       swrite(cmd);
     }
   });
@@ -35,6 +37,10 @@ try{
 
   client.on('data', function(data) {
     console.log('Received: ' + data);
+    if(data.toString().substring(0, 10) == 'get_pic_ok'){
+      console.log('Receive get_pic_ok, transfer to App');
+      io.emit('cmd', 'get_pic_ok');
+    }
   });
 
   client.on('close', function() {
@@ -59,5 +65,9 @@ rl.on('line', function (cmd) {
   console.log('send command: '+cmd);
   if(cmd == 'get_pic'){
     swrite(cmd);
+  }else if(cmd == 'send_data'){
+    rl.question("Input the command to send to App ", function(data) {
+        io.emit('data', data);
+    });
   }
 });
