@@ -417,7 +417,7 @@
                     <form name="settings-form" role="form">
                     <div class="form-group">
                     <label for="server_ip">Server IP</label>
-                    <input class="form-control" name="server_ip" id="server_ip" value="192.168.3.118:3000" placeholder="請輸入Server IP" />
+                    <input class="form-control" name="server_ip" id="server_ip" value="192.168.1.10:3000" placeholder="請輸入Server IP" />
                     </div>
                     <div class="form-group">
                     <label for="server_port">Server Port</label>
@@ -461,7 +461,7 @@
         <!--<script type="text/javascript" src="cordova.js"></script>-->
         <script type="text/javascript">
             
-            var host = "192.168.3.118:3000",
+            var host = "192.168.1.10:3000",
             port = "3000",
             data = "-- data to be sent --",
             key = "",
@@ -555,35 +555,45 @@
                 brush_right = cur_host+ 'brush_right'+snum+'.png?r='+get_random_str();
                 eye_left = cur_host+ 'eye_left'+snum+'.png?r='+get_random_str();
                 eye_right = cur_host+ 'eye_right'+snum+'.png?r='+get_random_str();
-                var loc = get_draw_locs();
+                //var loc = get_draw_locs();
+                var brush_loc = cal_brush_loc();
+                var eye_loc = cal_eye_loc();
+                console.log(brush_loc);
+                console.log(eye_loc);
                 $('#photo-canvas').drawImage({
                     source: brush_left,
-                    x: loc.blx, y: loc.bly,
-                    scale: 0.7,
+                    x: brush_loc.blx, y: brush_loc.bly,
+                    scale: brush_loc.blr,
+                    rotate: brush_loc.bln,
+                    opacity: 0.5,
                     layer: true,
                     fromCenter: true,
                     groups: ['makeups'],
                     name: 'brushleft'
                 }).drawImage({
                     source: brush_right,
-                    x: loc.brx, y: loc.bry,
-                    scale: 0.7,
+                    x: brush_loc.brx, y: brush_loc.bry,
+                    scale: brush_loc.brr,
+                    rotate: brush_loc.brn,
+                    opacity: 0.5,
                     layer: true,
                     fromCenter: true,
                     groups: ['makeups'],
                     name: 'brushright'
                 }).drawImage({
                     source: eye_left,
-                    x: loc.elx, y: loc.ely,
-                    scale: 0.8,
+                    x: eye_loc.elx, y: eye_loc.ely,
+                    scale: 0.6,
+                    opacity: 0.4,
                     layer: true,
                     fromCenter: true,
                     groups: ['makeups'],
                     name: 'eyeleft'
                 }).drawImage({
                     source: eye_right,
-                    x: loc.erx, y: loc.ery,
-                    scale: 0.8,
+                    x: eye_loc.erx, y: eye_loc.ery,
+                    scale: 0.6,
+                    opacity: 0.4,
                     layer: true,
                     fromCenter: true,
                     groups: ['makeups'],
@@ -708,7 +718,7 @@
                             var px = parseInt(points[0]);
                             var py = parseInt(points[1]);
                             var point =  {'x':px, 'y':py};
-                            console.log(px+','+py);
+                            console.log('p' + n + ':' + px+','+py);
                             point= fix_locations(point);
                             n++;
                             locations['p' + n] =point;
@@ -754,11 +764,12 @@
                 var loc = {};
                 loc.blx = (pla.x + plb.x) / 2 - 10;
                 loc.bly = (pla.y + plb.y) / 2 + 20;
-                loc.blr = (plb.x - pla.x) / 2;
+                loc.blr = (plb.x - pla.x) / 4;
+                
                 draw_point('bl', {x:loc.blx, y:loc.bly}, 'bigp', 'BL');
                 loc.brx = (pra.x + prb.x) / 2 + 10;
                 loc.bry = (pra.y + prb.y) / 2 + 20;
-                loc.brr = (prb.x - pra.x) / 2;
+                loc.brr = (prb.x - pra.x) / 4;
                 draw_point('br', {x:loc.brx, y:loc.bry}, 'bigp', 'BR');
                 var ple1 = locations['p12'];//右眼上前
                 var ple2 = locations['p14'];//右眼上後
@@ -774,6 +785,62 @@
                 loc.ery = (pre3.y + pre4.y) / 2 + 5;
                 return loc;
             }
+            
+            //腮紅位置計算
+            function cal_brush_loc(){
+                var pla = locations['p54'];//右耳上
+                var plb = locations['p31'];//右鼻翼外側
+                var plc = locations['p58'];//右下頰
+                var pra = locations['p70'];//左耳上
+                var prb = locations['p33'];//左鼻翼外側
+                var prc = locations['p65'];//左下頰
+                var loc = {};
+                loc.bld = (plb.x - pla.x) ;
+                var blxo = loc.bld / 6; //左側的腮紅中心位移計算
+                loc.blx = (pla.x + plb.x) / 2 - blxo; 
+                loc.bly = (pla.y + plb.y) / 2 + 12;
+                loc.blr = loc.bld / 80; // 左側的腮紅縮放計算
+                loc.bln = (plc.x - pla.x) / ( plb.x - pla.x) * 15; //左側腮紅旋轉角度計算(負值就逆旋轉)
+                draw_point('bl', {x:loc.blx, y:loc.bly}, 'bigp', 'BL');
+
+                loc.brd = (prb.x - pra.x) ;
+                var brxo = loc.bld / 5.5; //左側的腮紅圓心位移計算
+                loc.brx = (pra.x + prb.x) / 2;
+                loc.bry = (pra.y + prb.y) / 2;
+                loc.brr = loc.brd / 80; // 右側的腮紅縮放計算
+                loc.brn = (prc.x - pra.x) / ( prb.x - pra.x) * -15; //右側腮紅旋轉角度計算(正值就逆旋轉)
+                draw_point('br', {x:loc.brx, y:loc.bry}, 'bigp', 'BR');
+                return loc;
+            }
+            //眼影位置計算
+            function cal_eye_loc(){
+                var ple1 = locations['p12'];//右眼上前
+                var ple2 = locations['p14'];//右眼上後
+                var ple3 = locations['p77'];//右眼瞳孔
+                var ple4 = locations['p71'];//右眉下中
+                var ple5 = locations['p11'];//右眼內側
+                var ple6 = locations['p15'];//右眼外側
+                var ple7 = locations['p13'];//右眼上中
+
+                var pre1 = locations['p20'];//左眼上前
+                var pre2 = locations['p22'];//左眼上後
+                var pre3 = locations['p78'];//左眼瞳孔
+                var pre4 = locations['p74'];//左眉下中
+                var pre5 = locations['p19'];//左眼內側
+                var pre6 = locations['p23'];//左眼外側
+                var pre7 = locations['p21'];//左眼上中
+                var loc = {};
+                loc.elxd = ple5.x - ple6.x; //右眼區寬度
+                loc.elyd = ple7.y - ple4.y; //右眼區高度
+                loc.elx = (ple1.x + ple2.x) / 2 - loc.elxd / 5;
+                loc.ely = (ple3.y + ple4.y) / 2 + loc.elyd / 3;
+                loc.erxd = pre6.x - pre5.x //左眼寬度
+                loc.eryd = pre7.y - pre4.y; //右眼區高度
+                loc.erx = (pre1.x + pre2.x) / 2 + loc.erxd / 5;
+                loc.ery = (pre3.y + pre4.y) / 2 + loc.eryd / 3;
+                return loc;
+            }
+
             function fix_locations(p){
                 var new_p = {};
                 new_p.x = p.x -160;
